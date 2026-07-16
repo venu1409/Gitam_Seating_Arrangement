@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Examination Seating Arrangement System</title>
+  <!-- Google Fonts - Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <!-- xlsx-js-style library (SheetJS with Style support) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <!-- FileSaver.js for downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="fa-solid fa-chair-office brand-icon"></i>
+        <div class="brand-info">
+          <h1>ExamSeat</h1>
+          <span>Arrangement System</span>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-tab="dashboard">
+          <i class="fa-solid fa-gauge"></i> Dashboard
+        </a>
+        <a href="#" class="nav-item" data-tab="students">
+          <i class="fa-solid fa-graduation-cap"></i> Students List
+        </a>
+        <a href="#" class="nav-item" data-tab="rooms">
+          <i class="fa-solid fa-school"></i> Rooms List
+        </a>
+        <a href="#" class="nav-item" data-tab="seating">
+          <i class="fa-solid fa-grid-2"></i> Seating Preview
+        </a>
+        <a href="#" class="nav-item" data-tab="reports">
+          <i class="fa-solid fa-file-invoice"></i> Reports & Summary
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <p>Version 1.0.0 (Browser-only)</p>
+        <small>Designed for GITAM Exams</small>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <h2 id="page-title">Dashboard</h2>
+          <p id="page-subtitle">Overview and exam seating controls</p>
+        </div>
+        <div class="topbar-right">
+          <div class="theme-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Local Engine Active</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Stats Cards -->
+      <section class="stats-grid">
+        <div class="stats-card">
+          <div class="stats-info">
+            <span class="stats-label">Total Students</span>
+            <h3 class="stats-value" id="stat-total-students">0</h3>
+          </div>
+          <div class="stats-icon bg-indigo-light">
+            <i class="fa-solid fa-users text-indigo"></i>
+          </div>
+        </div>
+
+        <div class="stats-card">
+          <div class="stats-info">
+            <span class="stats-label">Total Subjects</span>
+            <h3 class="stats-value" id="stat-total-subjects">0</h3>
+          </div>
+          <div class="stats-icon bg-amber-light">
+            <i class="fa-solid fa-book-bookmark text-amber"></i>
+          </div>
+        </div>
+
+        <div class="stats-card">
+          <div class="stats-info">
+            <span class="stats-label">Rooms Used</span>
+            <h3 class="stats-value" id="stat-rooms-used">0</h3>
+          </div>
+          <div class="stats-icon bg-emerald-light">
+            <i class="fa-solid fa-door-open text-emerald"></i>
+          </div>
+        </div>
+
+        <div class="stats-card">
+          <div class="stats-info">
+            <span class="stats-label">Total Capacity</span>
+            <h3 class="stats-value" id="stat-total-capacity">0</h3>
+          </div>
+          <div class="stats-icon bg-rose-light">
+            <i class="fa-solid fa-building text-rose"></i>
+          </div>
+        </div>
+
+        <div class="stats-card">
+          <div class="stats-info">
+            <span class="stats-label">Total Empty Seats</span>
+            <h3 class="stats-value" id="stat-empty-seats">0</h3>
+          </div>
+          <div class="stats-icon bg-slate-light">
+            <i class="fa-solid fa-cubes text-slate"></i>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notification/Warning Banner -->
+      <div id="warning-banner" class="warning-banner hidden">
+        <div class="warning-content">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span id="warning-text">Some warning message.</span>
+        </div>
+        <button id="close-warning" class="close-warning-btn">&times;</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content-container">
+        
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="tab-panel active">
+          <div class="dashboard-grid">
+            <!-- Left Side: Uploaders & Configuration -->
+            <div class="panel-column">
+              <!-- Upload Card -->
+              <div class="glass-card">
+                <div class="card-header">
+                  <h3><i class="fa-solid fa-file-import"></i> Data Import</h3>
+                </div>
+                <div class="card-body">
+                  <div class="upload-row">
+                    <!-- Student Uploader -->
+                    <div class="file-uploader" id="student-uploader">
+                      <input type="file" id="student-file-input" accept=".xlsx, .xls" multiple hidden>
+                      <i class="fa-solid fa-file-excel upload-icon"></i>
+                      <h4>Student List</h4>
+                      <p>Click to browse or drag Excel here</p>
+                      <span class="file-status-badge" id="student-file-status">No file chosen</span>
+                    </div>
+                    
+                    <!-- Room Uploader -->
+                    <div class="file-uploader" id="room-uploader">
+                      <input type="file" id="room-file-input" accept=".xlsx, .xls" hidden>
+                      <i class="fa-solid fa-map-location-dot upload-icon"></i>
+                      <h4>Room List</h4>
+                      <p>Click to browse or drag Excel here</p>
+                      <span class="file-status-badge" id="room-file-status">No file chosen</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Configuration Card -->
+              <div class="glass-card">
+                <div class="card-header">
+                  <h3><i class="fa-solid fa-sliders"></i> Seating Configuration</h3>
+                </div>
+                <div class="card-body">
+                  <form id="config-form">
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="exam-date">Exam Date</label>
+                        <select id="exam-date" disabled>
+                          <option value="">Select Date (Import Student List First)</option>
+                        </select>
+                      </div>
+                      
+                      <div class="form-group">
+                        <label for="exam-session">Exam Session</label>
+                        <select id="exam-session" disabled>
+                          <option value="">Select Session</option>
+                          <option value="FN">Morning (FN)</option>
+                          <option value="AN">Afternoon (AN)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="custom-timing">Custom Exam Timing</label>
+                      <input type="text" id="custom-timing" placeholder="e.g., 10:15 AM - 12:15 PM" disabled>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Students Per Bench</label>
+                      <div class="radio-group">
+                        <label class="radio-label">
+                          <input type="radio" name="students-per-bench" value="2" checked>
+                          <span class="radio-custom"></span>
+                          2 Students (Seat A, B)
+                        </label>
+                        <label class="radio-label">
+                          <input type="radio" name="students-per-bench" value="3">
+                          <span class="radio-custom"></span>
+                          3 Students (Seat A, B, C)
+                        </label>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side: Controls & Processing Actions -->
+            <div class="panel-column">
+              <div class="glass-card action-panel">
+                <div class="card-header">
+                  <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Process Engine</h3>
+                </div>
+                <div class="card-body action-body">
+                  <p class="action-description">
+                    Load files, adjust configurations, and run the seating layout engine. Output will be generated locally in your browser.
+                  </p>
+                  
+                  <div class="button-stack">
+                    <button class="btn btn-secondary" id="btn-load-demo">
+                      <i class="fa-solid fa-cloud-arrow-down"></i> Load Demo Data
+                    </button>
+                    <button class="btn btn-primary" id="btn-generate" disabled>
+                      <i class="fa-solid fa-play"></i> Generate Seating Plan
+                    </button>
+                    <button class="btn btn-secondary" id="btn-preview-tab" disabled>
+                      <i class="fa-solid fa-eye"></i> Preview Seating Layout
+                    </button>
+                    <button class="btn btn-success" id="btn-export" disabled>
+                      <i class="fa-solid fa-file-arrow-down"></i> Export Seating Workbook
+                    </button>
+                    <button class="btn btn-danger" id="btn-clear">
+                      <i class="fa-solid fa-trash-can"></i> Clear All Data
+                    </button>
+                  </div>
+                  
+                  <div class="status-indicator">
+                    <span class="status-dot green"></span>
+                    <span id="engine-status-text">Engine ready. Waiting for input files.</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- About Card -->
+              <div class="glass-card">
+                <div class="card-header">
+                  <h3><i class="fa-solid fa-circle-info"></i> Seating Rules</h3>
+                </div>
+                <div class="card-body rules-list-body">
+                  <ul class="rules-list">
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Same course codes/names must <strong>never</strong> sit beside each other.</li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Different semesters are allowed together on the same bench.</li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Keep students of the same course in nearby/consecutive rooms.</li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Fill one room completely before moving to the next.</li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Fill columns top-to-bottom, then left-to-right.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student List Tab -->
+        <div id="tab-students" class="tab-panel">
+          <div class="glass-card">
+            <div class="card-header table-header">
+              <h3><i class="fa-solid fa-users"></i> Imported Student Registry</h3>
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="student-search" placeholder="Search students...">
+              </div>
+            </div>
+            <div class="card-body table-responsive">
+              <table class="data-table" id="table-students">
+                <thead>
+                  <tr>
+                    <th>Registration No</th>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Branch</th>
+                    <th>Semester</th>
+                    <th>Date</th>
+                    <th>Session</th>
+                  </tr>
+                </thead>
+                <tbody id="student-table-body">
+                  <tr>
+                    <td colspan="7" class="empty-table">No student data imported. Upload Student List.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Room List Tab -->
+        <div id="tab-rooms" class="tab-panel">
+          <div class="glass-card">
+            <div class="card-header table-header">
+              <h3><i class="fa-solid fa-school"></i> Rooms and Capacities</h3>
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="room-search" placeholder="Search rooms...">
+              </div>
+            </div>
+            <div class="card-body table-responsive">
+              <table class="data-table" id="table-rooms">
+                <thead>
+                  <tr>
+                    <th>Room Number</th>
+                    <th>Building</th>
+                    <th>Floor</th>
+                    <th>C1</th>
+                    <th>C2</th>
+                    <th>C3</th>
+                    <th>C4</th>
+                    <th>C5</th>
+                    <th>C6</th>
+                    <th>Total Capacity</th>
+                  </tr>
+                </thead>
+                <tbody id="room-table-body">
+                  <tr>
+                    <td colspan="10" class="empty-table">No room data imported. Upload Room List.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seating Preview Tab -->
+        <div id="tab-seating" class="tab-panel">
+          <div class="room-preview-header">
+            <h3>Visual Room Layouts</h3>
+            <p>Seating arrangement cards by room. Benches are columns filled top-to-bottom.</p>
+          </div>
+          <!-- Room cards grid container -->
+          <div class="room-cards-grid" id="room-cards-container">
+            <div class="empty-state">
+              <i class="fa-solid fa-chair-office"></i>
+              <h4>No Seating Plan Generated</h4>
+              <p>Configure exam parameters and click "Generate Seating Plan" to view seating layouts.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reports & Summary Tab -->
+        <div id="tab-reports" class="tab-panel">
+          <div class="reports-grid">
+            <!-- Left Side: Used Rooms Report -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-door-closed"></i> Used Rooms Report</h3>
+              </div>
+              <div class="card-body table-responsive">
+                <table class="data-table" id="table-used-rooms">
+                  <thead>
+                    <tr>
+                      <th>Room</th>
+                      <th>Building</th>
+                      <th>Floor</th>
+                      <th>Capacity (Seats)</th>
+                      <th>Occupied</th>
+                      <th>Remaining</th>
+                    </tr>
+                  </thead>
+                  <tbody id="used-rooms-table-body">
+                    <tr>
+                      <td colspan="6" class="empty-table">No seating plan generated yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right Side: Seating Summary -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-clipboard-list"></i> Seating Summary</h3>
+              </div>
+              <div class="card-body table-responsive">
+                <table class="data-table" id="table-seating-summary">
+                  <thead>
+                    <tr>
+                      <th>Room</th>
+                      <th>Students Seated</th>
+                      <th>Total Capacity</th>
+                      <th>Empty Seats</th>
+                      <th>Courses</th>
+                      <th>Semesters</th>
+                    </tr>
+                  </thead>
+                  <tbody id="summary-table-body">
+                    <tr>
+                      <td colspan="6" class="empty-table">No seating plan generated yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  
+  <!-- Main Script Module -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>
