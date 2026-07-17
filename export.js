@@ -4,6 +4,10 @@
 
 import { formatDate } from './excel.js';
 
+// Cache for parsed template workbook to avoid redundant network fetches and parsing
+let cachedTemplateWb = null;
+
+
 // Deep clones a SheetJS worksheet object including all cell styles and structures
 function cloneSheet(ws) {
   const newSheet = {};
@@ -64,15 +68,20 @@ function findRoomSheetName(workbook, roomNumber, building) {
 export function exportSeatingWorkbook(seatingByRoom, examDate, examSession, examTiming, studentsPerBench) {
   return new Promise(async (resolve, reject) => {
     try {
-      // 1. Fetch the master template Excel file
-      const response = await fetch('Seating Plan Master copy 3-AN-S1.xlsx');
-      if (!response.ok) {
-        throw new Error('Failed to load master template Excel. Make sure Seating Plan Master copy 3-AN-S1.xlsx is present.');
+      // 1. Fetch the master template Excel file (use cache if available)
+      let templateWb;
+      if (cachedTemplateWb) {
+        templateWb = cachedTemplateWb;
+      } else {
+        const response = await fetch('Seating Plan Master copy 3-AN-S1.xlsx');
+        if (!response.ok) {
+          throw new Error('Failed to load master template Excel. Make sure Seating Plan Master copy 3-AN-S1.xlsx is present.');
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        // Read with style option enabled
+        templateWb = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
+        cachedTemplateWb = templateWb;
       }
-      const arrayBuffer = await response.arrayBuffer();
-      
-      // Read with style option enabled
-      const templateWb = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true });
       
       // 2. Prepare new workbook
       const outputWb = XLSX.utils.book_new();
@@ -363,22 +372,26 @@ export function exportSeatingWorkbook(seatingByRoom, examDate, examSession, exam
       }
       XLSX.utils.book_append_sheet(outputWb, usedRoomsSheet, 'Used Rooms Report');
 
-      // 6. Write and trigger browser download (using Base64 Data URL to bypass browser Blob restrictions)
-      const base64 = XLSX.write(outputWb, { bookType: 'xlsx', type: 'base64', cellStyles: true });
-      const url = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64;
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Seating_Plan_${formatDate(examDate)}_${examSession}.xlsx`;
-      
-      // Append to DOM, click, and clean up
-      document.body.appendChild(a);
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-      }, 100);
-      
+      // 6. Write and trigger browser download (using binary array buffer and Blob for high performance)
+      const wbout = XLSX.write(outputWb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const filename = `Seating_Plan_${formatDate(examDate)}_${examSession}.xlsx`;
+
+      if (typeof saveAs !== 'undefined') {
+        saveAs(blob, filename);
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }
+
       resolve();
     } catch (err) {
       reject(new Error('Export failed: ' + err.message));
