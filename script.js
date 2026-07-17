@@ -233,6 +233,14 @@ function setupConfigListeners() {
     });
   });
 
+  // Prevent form submission/page reload when pressing Enter on inputs
+  const configForm = document.getElementById('config-form');
+  if (configForm) {
+    configForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+    });
+  }
+
   // Warning banner close action
   elements.closeWarning.addEventListener('click', () => {
     ui.hideWarning();
