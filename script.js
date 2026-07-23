@@ -49,6 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupUploaders();
   setupConfigListeners();
   setupActionButtons();
+  setupRoomDatabaseActions(); // Wire CRUD database modal handlers
+  setupSearchAndFilters();    // Wire registry search fields
+  loadDefaultRooms();         // Preload room configurations
 });
 
 // Setup sidebar tab navigation
@@ -171,6 +174,7 @@ async function handleStudentUpload(e) {
     elements.customTimingInput.removeAttribute('disabled');
 
     ui.renderStudentsTable(state.students);
+    ui.renderStudentSummary(state.students);
     checkEnableGenerate();
     
     elements.engineStatus.textContent = `Imported students from ${files.length} file(s). Now configure exam timings.`;
@@ -314,6 +318,7 @@ function setupActionButtons() {
       elements.studentStatus.textContent = `${state.students.length} students loaded (Demo)`;
       elements.studentUploader.classList.add('success');
       ui.renderStudentsTable(state.students);
+      ui.renderStudentSummary(state.students);
       
       // Fill Exam Dates select
       const uniqueDates = [...new Set(state.students.map(s => s.date))].filter(Boolean).sort();
@@ -429,7 +434,6 @@ function setupActionButtons() {
   elements.btnClear.addEventListener('click', () => {
     // Reset state variables
     state.students = [];
-    state.rooms = [];
     state.filteredStudents = [];
     state.seatingResult = null;
     state.selectedDate = '';
@@ -440,7 +444,7 @@ function setupActionButtons() {
     elements.studentInput.value = '';
     elements.roomInput.value = '';
     elements.studentStatus.textContent = 'No file chosen';
-    elements.roomStatus.textContent = 'No file chosen';
+    elements.roomStatus.textContent = 'Loading...';
     elements.studentUploader.classList.remove('success');
     elements.roomUploader.classList.remove('success');
     
@@ -468,7 +472,7 @@ function setupActionButtons() {
       emptySeats: 0
     });
     ui.renderStudentsTable([]);
-    ui.renderRoomsTable([]);
+    ui.renderStudentSummary([]);
     ui.renderSeatingCards({}, 2);
     ui.renderReports({}, 2);
     
@@ -476,6 +480,234 @@ function setupActionButtons() {
     const dashboardNav = document.querySelector('.nav-item[data-tab="dashboard"]');
     if (dashboardNav) dashboardNav.click();
 
-    elements.engineStatus.textContent = 'Workspace cleared. Upload lists to begin.';
+    elements.engineStatus.textContent = 'Workspace cleared. Loading default rooms...';
+    loadDefaultRooms(); // Re-fetch default rooms list
+  });
+}
+
+// Load default rooms from local Room list.xlsx file
+async function loadDefaultRooms() {
+  try {
+    elements.engineStatus.textContent = 'Loading default room configurations...';
+    const response = await fetch('Room list.xlsx');
+    if (!response.ok) {
+      throw new Error('Default Room list.xlsx file not found on server.');
+    }
+    const buffer = await response.arrayBuffer();
+    state.rooms = await parseRoomExcel(buffer);
+    
+    elements.roomStatus.textContent = `${state.rooms.length} default rooms active`;
+    elements.roomUploader.classList.add('success');
+    
+    ui.renderRoomsTable(state.rooms);
+    checkEnableGenerate();
+    
+    elements.engineStatus.textContent = 'Ready. Default room configurations loaded.';
+  } catch (err) {
+    console.warn('Failed to load default room configuration:', err.message);
+    elements.engineStatus.textContent = 'Ready. Please upload Room list to populate database.';
+    elements.roomStatus.textContent = 'No rooms active';
+    elements.roomUploader.classList.remove('success');
+  }
+}
+
+// Modal state
+let editingRoomNo = null;
+
+// Room CRUD Event Handlers
+function setupRoomDatabaseActions() {
+  const modal = document.getElementById('room-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const roomForm = document.getElementById('room-form');
+  
+  const roomNumberInput = document.getElementById('room-number-input');
+  const roomBuildingInput = document.getElementById('room-building-input');
+  const roomFloorInput = document.getElementById('room-floor-input');
+  const c1Input = document.getElementById('c1-input');
+  const c2Input = document.getElementById('c2-input');
+  const c3Input = document.getElementById('c3-input');
+  const c4Input = document.getElementById('c4-input');
+  const c5Input = document.getElementById('c5-input');
+  const c6Input = document.getElementById('c6-input');
+  
+  const btnAddRoom = document.getElementById('btn-add-room');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+  const modalCancelBtn = document.getElementById('modal-cancel-btn');
+
+  // Open modal in ADD mode
+  btnAddRoom.addEventListener('click', () => {
+    editingRoomNo = null;
+    modalTitle.textContent = 'Add New Room';
+    roomForm.reset();
+    roomNumberInput.removeAttribute('disabled');
+    modal.classList.add('active');
+  });
+
+  // Close modal functions
+  const closeModal = () => {
+    modal.classList.remove('active');
+    roomForm.reset();
+  };
+  
+  modalCloseBtn.addEventListener('click', closeModal);
+  modalCancelBtn.addEventListener('click', closeModal);
+
+  // Form submit (Save / Update)
+  roomForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const roomNo = roomNumberInput.value.trim();
+    const building = roomBuildingInput.value.trim() || 'MAIN';
+    const floor = roomFloorInput.value.trim() || 'Ground';
+    
+    const c1 = parseInt(c1Input.value) || 0;
+    const c2 = parseInt(c2Input.value) || 0;
+    const c3 = parseInt(c3Input.value) || 0;
+    const c4 = parseInt(c4Input.value) || 0;
+    const c5 = parseInt(c5Input.value) || 0;
+    const c6 = parseInt(c6Input.value) || 0;
+    const totalBenches = c1 + c2 + c3 + c4 + c5 + c6;
+
+    if (totalBenches <= 0) {
+      alert('Total benches must be greater than 0.');
+      return;
+    }
+
+    const roomData = {
+      roomNumber: roomNo,
+      building: building,
+      floor: floor,
+      c1, c2, c3, c4, c5, c6,
+      totalBenches
+    };
+
+    if (editingRoomNo) {
+      // Edit mode: find and update
+      const idx = state.rooms.findIndex(r => r.roomNumber === editingRoomNo);
+      if (idx !== -1) {
+        state.rooms[idx] = roomData;
+        elements.engineStatus.textContent = `Room ${roomNo} updated.`;
+      }
+    } else {
+      // Add mode: check uniqueness
+      const exists = state.rooms.some(r => r.roomNumber.toLowerCase() === roomNo.toLowerCase());
+      if (exists) {
+        alert(`Room Number ${roomNo} already exists in database.`);
+        return;
+      }
+      state.rooms.unshift(roomData); // Add to beginning of array
+      elements.engineStatus.textContent = `Room ${roomNo} added.`;
+    }
+
+    ui.renderRoomsTable(state.rooms);
+    checkEnableGenerate();
+    closeModal();
+  });
+
+  // Table row actions (Edit / Delete) via event delegation on room-table-body
+  const roomTableBody = document.getElementById('room-table-body');
+  roomTableBody.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const roomNo = editBtn.getAttribute('data-room');
+      const room = state.rooms.find(r => r.roomNumber === roomNo);
+      if (room) {
+        editingRoomNo = roomNo;
+        modalTitle.textContent = 'Edit Room ' + roomNo;
+        
+        // Populate inputs
+        roomNumberInput.value = room.roomNumber;
+        roomNumberInput.setAttribute('disabled', 'true'); // Don't allow changing room ID in edit
+        roomBuildingInput.value = room.building;
+        roomFloorInput.value = room.floor;
+        c1Input.value = room.c1 || 0;
+        c2Input.value = room.c2 || 0;
+        c3Input.value = room.c3 || 0;
+        c4Input.value = room.c4 || 0;
+        c5Input.value = room.c5 || 0;
+        c6Input.value = room.c6 || 0;
+        
+        modal.classList.add('active');
+      }
+    }
+    
+    if (deleteBtn) {
+      const roomNo = deleteBtn.getAttribute('data-room');
+      if (confirm(`Are you sure you want to delete room ${roomNo}?`)) {
+        state.rooms = state.rooms.filter(r => r.roomNumber !== roomNo);
+        ui.renderRoomsTable(state.rooms);
+        checkEnableGenerate();
+        elements.engineStatus.textContent = `Room ${roomNo} deleted.`;
+      }
+    }
+  });
+}
+
+// Table search and click filtering actions
+function setupSearchAndFilters() {
+  // Student search
+  const studentSearch = document.getElementById('student-search');
+  if (studentSearch) {
+    studentSearch.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase().trim();
+      const filtered = state.students.filter(s => 
+        s.registrationNumber.toLowerCase().includes(term) ||
+        s.courseCode.toLowerCase().includes(term) ||
+        s.courseName.toLowerCase().includes(term) ||
+        s.branch.toLowerCase().includes(term)
+      );
+      ui.renderStudentsTable(filtered);
+    });
+  }
+
+  // Room search
+  const roomSearch = document.getElementById('room-search');
+  if (roomSearch) {
+    roomSearch.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase().trim();
+      const filtered = state.rooms.filter(r => 
+        r.roomNumber.toLowerCase().includes(term) ||
+        r.building.toLowerCase().includes(term) ||
+        r.floor.toLowerCase().includes(term)
+      );
+      ui.renderRoomsTable(filtered);
+    });
+  }
+
+  // Student summary item click filtering (toggle state)
+  document.getElementById('subject-summary-list').addEventListener('click', (e) => {
+    const item = e.target.closest('.summary-item');
+    if (!item) return;
+    
+    const isActive = item.classList.contains('active');
+    document.querySelectorAll('.summary-item').forEach(el => el.classList.remove('active'));
+    
+    if (isActive) {
+      ui.renderStudentsTable(state.students);
+    } else {
+      item.classList.add('active');
+      const val = item.getAttribute('data-filter-value');
+      const filtered = state.students.filter(s => s.courseCode === val);
+      ui.renderStudentsTable(filtered);
+    }
+  });
+
+  document.getElementById('branch-summary-list').addEventListener('click', (e) => {
+    const item = e.target.closest('.summary-item');
+    if (!item) return;
+    
+    const isActive = item.classList.contains('active');
+    document.querySelectorAll('.summary-item').forEach(el => el.classList.remove('active'));
+    
+    if (isActive) {
+      ui.renderStudentsTable(state.students);
+    } else {
+      item.classList.add('active');
+      const val = item.getAttribute('data-filter-value');
+      const filtered = state.students.filter(s => s.branch === val);
+      ui.renderStudentsTable(filtered);
+    }
   });
 }

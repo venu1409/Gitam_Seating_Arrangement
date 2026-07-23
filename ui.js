@@ -91,7 +91,7 @@ export function renderStudentsTable(students) {
 export function renderRoomsTable(rooms) {
   const tbody = document.getElementById('room-table-body');
   if (!rooms || rooms.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" class="empty-table">No room data imported. Upload Room List.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty-table">No room data imported. Upload Room List.</td></tr>`;
     return;
   }
   
@@ -100,13 +100,23 @@ export function renderRoomsTable(rooms) {
       <td><strong>${r.roomNumber}</strong></td>
       <td>${r.building}</td>
       <td>${r.floor}</td>
-      <td>${r.c1 || '-'}</td>
-      <td>${r.c2 || '-'}</td>
-      <td>${r.c3 || '-'}</td>
-      <td>${r.c4 || '-'}</td>
-      <td>${r.c5 || '-'}</td>
-      <td>${r.c6 || '-'}</td>
+      <td>${r.c1 !== undefined && r.c1 !== null ? r.c1 : '-'}</td>
+      <td>${r.c2 !== undefined && r.c2 !== null ? r.c2 : '-'}</td>
+      <td>${r.c3 !== undefined && r.c3 !== null ? r.c3 : '-'}</td>
+      <td>${r.c4 !== undefined && r.c4 !== null ? r.c4 : '-'}</td>
+      <td>${r.c5 !== undefined && r.c5 !== null ? r.c5 : '-'}</td>
+      <td>${r.c6 !== undefined && r.c6 !== null ? r.c6 : '-'}</td>
       <td><span class="badge" style="background-color: var(--accent-color)">${r.totalBenches} benches</span></td>
+      <td>
+        <div style="display: flex; gap: 4px;">
+          <button class="btn-icon btn-edit" data-room="${r.roomNumber}" title="Edit Room">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button class="btn-icon btn-delete" data-room="${r.roomNumber}" title="Delete Room">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </td>
     </tr>
   `).join('');
 }
@@ -282,3 +292,62 @@ export function renderReports(seatingByRoom, studentsPerBench) {
     `;
   }).join('');
 }
+
+/**
+ * Render summarization cards of imported student registry (by course/subject and branch)
+ * @param {Array<Object>} students - Full list of students
+ */
+export function renderStudentSummary(students) {
+  const subjectList = document.getElementById('subject-summary-list');
+  const branchList = document.getElementById('branch-summary-list');
+  
+  if (!students || students.length === 0) {
+    subjectList.innerHTML = `<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px 0;">No subjects loaded</div>`;
+    branchList.innerHTML = `<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px 0;">No branches loaded</div>`;
+    return;
+  }
+  
+  // 1. Group by subject/course
+  const subjectCounts = {};
+  students.forEach(s => {
+    const key = s.courseCode;
+    if (!subjectCounts[key]) {
+      subjectCounts[key] = {
+        code: s.courseCode,
+        name: s.courseName,
+        count: 0
+      };
+    }
+    subjectCounts[key].count++;
+  });
+  
+  const sortedSubjects = Object.values(subjectCounts).sort((a, b) => b.count - a.count);
+  
+  subjectList.innerHTML = sortedSubjects.map(sub => `
+    <div class="summary-item" data-filter-type="subject" data-filter-value="${sub.code}">
+      <div class="summary-item-label" title="${sub.code} - ${sub.name}">
+        <strong>${sub.code}</strong> <span style="opacity:0.7; font-size:10px;">${sub.name}</span>
+      </div>
+      <span class="summary-item-count">${sub.count}</span>
+    </div>
+  `).join('');
+  
+  // 2. Group by branch/department
+  const branchCounts = {};
+  students.forEach(s => {
+    const key = s.branch;
+    branchCounts[key] = (branchCounts[key] || 0) + 1;
+  });
+  
+  const sortedBranches = Object.entries(branchCounts).sort((a, b) => b[1] - a[1]);
+  
+  branchList.innerHTML = sortedBranches.map(([branch, count]) => `
+    <div class="summary-item" data-filter-type="branch" data-filter-value="${branch}">
+      <div class="summary-item-label" title="${branch}">
+        <strong>${branch}</strong>
+      </div>
+      <span class="summary-item-count">${count}</span>
+    </div>
+  `).join('');
+}
+

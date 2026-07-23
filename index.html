@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,8 @@
   <!-- Google Fonts - Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Stylesheet -->
@@ -17,6 +19,7 @@
   <!-- FileSaver.js for downloads -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
+
 <body>
   <div class="app-container">
     <!-- Sidebar -->
@@ -28,7 +31,7 @@
           <span>Arrangement System</span>
         </div>
       </div>
-      
+
       <nav class="sidebar-nav">
         <a href="#" class="nav-item active" data-tab="dashboard">
           <i class="fa-solid fa-gauge"></i> Dashboard
@@ -46,7 +49,7 @@
           <i class="fa-solid fa-file-invoice"></i> Reports & Summary
         </a>
       </nav>
-      
+
       <div class="sidebar-footer">
         <p>Version 1.0.0 (Browser-only)</p>
         <small>Designed for GITAM Exams</small>
@@ -60,12 +63,6 @@
         <div class="topbar-left">
           <h2 id="page-title">Dashboard</h2>
           <p id="page-subtitle">Overview and exam seating controls</p>
-        </div>
-        <div class="topbar-right">
-          <div class="theme-badge">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>Local Engine Active</span>
-          </div>
         </div>
       </header>
 
@@ -133,7 +130,7 @@
 
       <!-- Tab Content Area -->
       <div class="tab-content-container">
-        
+
         <!-- Dashboard Tab -->
         <div id="tab-dashboard" class="tab-panel active">
           <div class="dashboard-grid">
@@ -154,7 +151,7 @@
                       <p>Click to browse or drag Excel here</p>
                       <span class="file-status-badge" id="student-file-status">No file chosen</span>
                     </div>
-                    
+
                     <!-- Room Uploader -->
                     <div class="file-uploader" id="room-uploader">
                       <input type="file" id="room-file-input" accept=".xlsx, .xls" hidden>
@@ -181,7 +178,7 @@
                           <option value="">Select Date (Import Student List First)</option>
                         </select>
                       </div>
-                      
+
                       <div class="form-group">
                         <label for="exam-session">Exam Session</label>
                         <select id="exam-session" disabled>
@@ -225,9 +222,10 @@
                 </div>
                 <div class="card-body action-body">
                   <p class="action-description">
-                    Load files, adjust configurations, and run the seating layout engine. Output will be generated locally in your browser.
+                    Load files, adjust configurations, and run the seating layout engine. Output will be generated
+                    locally in your browser.
                   </p>
-                  
+
                   <div class="button-stack">
                     <button class="btn btn-secondary" id="btn-load-demo">
                       <i class="fa-solid fa-cloud-arrow-down"></i> Load Demo Data
@@ -245,7 +243,7 @@
                       <i class="fa-solid fa-trash-can"></i> Clear All Data
                     </button>
                   </div>
-                  
+
                   <div class="status-indicator">
                     <span class="status-dot green"></span>
                     <span id="engine-status-text">Engine ready. Waiting for input files.</span>
@@ -260,11 +258,17 @@
                 </div>
                 <div class="card-body rules-list-body">
                   <ul class="rules-list">
-                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Same course codes/names must <strong>never</strong> sit beside each other.</li>
-                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Different semesters are allowed together on the same bench.</li>
-                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Keep students of the same course in nearby/consecutive rooms.</li>
-                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Fill one room completely before moving to the next.</li>
-                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Fill columns top-to-bottom, then left-to-right.</li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Same course codes/names must
+                      <strong>never</strong> sit beside each other.
+                    </li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Different semesters are allowed together
+                      on the same bench.</li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Keep students of the same course in
+                      nearby/consecutive rooms.</li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Fill one room completely before moving to
+                      the next.</li>
+                    <li><i class="fa-solid fa-circle-check text-emerald"></i> Fill columns top-to-bottom, then
+                      left-to-right.</li>
                   </ul>
                 </div>
               </div>
@@ -274,33 +278,63 @@
 
         <!-- Student List Tab -->
         <div id="tab-students" class="tab-panel">
-          <div class="glass-card">
-            <div class="card-header table-header">
-              <h3><i class="fa-solid fa-users"></i> Imported Student Registry</h3>
-              <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="student-search" placeholder="Search students...">
+          <div class="tab-layout-grid">
+            <!-- Left Side: Summary Panels -->
+            <div class="summary-sidebar-panel">
+              <!-- Subjects Summary -->
+              <div class="summary-card">
+                <div class="summary-card-title">
+                  <i class="fa-solid fa-book-bookmark"></i>
+                  <span>Subjects Summary</span>
+                </div>
+                <div class="summary-list" id="subject-summary-list">
+                  <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px 0;">No subjects loaded</div>
+                </div>
+              </div>
+
+              <!-- Branch Summary -->
+              <div class="summary-card">
+                <div class="summary-card-title">
+                  <i class="fa-solid fa-graduation-cap"></i>
+                  <span>Branch Summary</span>
+                </div>
+                <div class="summary-list" id="branch-summary-list">
+                  <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px 0;">No branches loaded</div>
+                </div>
               </div>
             </div>
-            <div class="card-body table-responsive">
-              <table class="data-table" id="table-students">
-                <thead>
-                  <tr>
-                    <th>Registration No</th>
-                    <th>Course Code</th>
-                    <th>Course Name</th>
-                    <th>Branch</th>
-                    <th>Semester</th>
-                    <th>Date</th>
-                    <th>Session</th>
-                  </tr>
-                </thead>
-                <tbody id="student-table-body">
-                  <tr>
-                    <td colspan="7" class="empty-table">No student data imported. Upload Student List.</td>
-                  </tr>
-                </tbody>
-              </table>
+
+            <!-- Right Side: Registry Table -->
+            <div class="table-main-panel">
+              <div class="glass-card">
+                <div class="card-header table-header">
+                  <h3><i class="fa-solid fa-users"></i> Imported Student Registry</h3>
+                  <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="student-search" placeholder="Search students...">
+                  </div>
+                </div>
+                <div class="card-body table-responsive">
+                  <table class="data-table" id="table-students">
+                    <thead>
+                      <tr>
+                        <th>Registration No</th>
+                        <th>Course Code</th>
+                        <th>Course Name</th>
+                        <th>Branch</th>
+                        <th>Semester</th>
+                        <th>Date</th>
+                        <th>Session</th>
+                      </tr>
+                    </thead>
+                    <tbody id="student-table-body">
+                      <tr>
+                        <td colspan="7" class="empty-table">No student data imported. Upload Student List.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -310,9 +344,14 @@
           <div class="glass-card">
             <div class="card-header table-header">
               <h3><i class="fa-solid fa-school"></i> Rooms and Capacities</h3>
-              <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="room-search" placeholder="Search rooms...">
+              <div class="header-actions">
+                <button class="btn btn-primary btn-sm" id="btn-add-room">
+                  <i class="fa-solid fa-plus"></i> Add Room
+                </button>
+                <div class="search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="room-search" placeholder="Search rooms...">
+                </div>
               </div>
             </div>
             <div class="card-body table-responsive">
@@ -328,12 +367,13 @@
                     <th>C4</th>
                     <th>C5</th>
                     <th>C6</th>
-                    <th>Total Capacity</th>
+                    <th>Total Benches</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="room-table-body">
                   <tr>
-                    <td colspan="10" class="empty-table">No room data imported. Upload Room List.</td>
+                    <td colspan="11" class="empty-table">No room data imported. Upload Room List.</td>
                   </tr>
                 </tbody>
               </table>
@@ -417,8 +457,70 @@
       </div>
     </main>
   </div>
-  
+
+  <!-- Add/Edit Room Modal Dialog -->
+  <div id="room-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Add Room</h3>
+        <button class="modal-close" id="modal-close-btn">&times;</button>
+      </div>
+      <form id="room-form">
+        <div class="modal-body">
+          <div class="grid-2col">
+            <div class="form-group">
+              <label for="room-number-input">Room Number</label>
+              <input type="text" id="room-number-input" placeholder="e.g. VBA 101A" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+            </div>
+            <div class="form-group">
+              <label for="room-building-input">Building / Block</label>
+              <input type="text" id="room-building-input" placeholder="e.g. VBA" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="room-floor-input">Classroom Floor</label>
+            <input type="text" id="room-floor-input" placeholder="e.g. Ground / 1st Floor" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+          </div>
+          
+          <h4 style="font-size: 13px; font-weight: 600; margin-top: 8px; border-bottom: 1px solid var(--border-light); padding-bottom: 6px;">Benches per Column</h4>
+          <div class="grid-3col">
+            <div class="form-group">
+              <label for="c1-input">Column C1</label>
+              <input type="number" id="c1-input" min="0" max="20" value="0" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+            </div>
+            <div class="form-group">
+              <label for="c2-input">Column C2</label>
+              <input type="number" id="c2-input" min="0" max="20" value="0" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+            </div>
+            <div class="form-group">
+              <label for="c3-input">Column C3</label>
+              <input type="number" id="c3-input" min="0" max="20" value="0" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+            </div>
+            <div class="form-group">
+              <label for="c4-input">Column C4</label>
+              <input type="number" id="c4-input" min="0" max="20" value="0" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+            </div>
+            <div class="form-group">
+              <label for="c5-input">Column C5</label>
+              <input type="number" id="c5-input" min="0" max="20" value="0" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+            </div>
+            <div class="form-group">
+              <label for="c6-input">Column C6</label>
+              <input type="number" id="c6-input" min="0" max="20" value="0" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-primary); color: white;">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modal-save-btn">Save Room</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Main Script Module -->
   <script type="module" src="script.js"></script>
 </body>
+
 </html>
