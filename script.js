@@ -200,6 +200,7 @@ async function handleRoomUpload(e) {
     elements.roomUploader.classList.add('success');
     
     ui.renderRoomsTable(state.rooms);
+    syncSelectAllCheckbox();
     checkEnableGenerate();
     
     elements.engineStatus.textContent = 'Room list imported. Ready to calculate.';
@@ -288,7 +289,8 @@ function filterStudentsBySelection() {
 
 // Check whether Seating engine is ready to run
 function checkEnableGenerate() {
-  if (state.filteredStudents.length > 0 && state.rooms.length > 0) {
+  const availableRooms = state.rooms.filter(r => r.available !== false);
+  if (state.filteredStudents.length > 0 && availableRooms.length > 0) {
     elements.btnGenerate.removeAttribute('disabled');
   } else {
     elements.btnGenerate.setAttribute('disabled', 'true');
@@ -312,6 +314,7 @@ function setupActionButtons() {
       elements.roomStatus.textContent = `${state.rooms.length} rooms loaded (Demo)`;
       elements.roomUploader.classList.add('success');
       ui.renderRoomsTable(state.rooms);
+      syncSelectAllCheckbox();
       
       // Parse students from Sheet 2 (S1)
       state.students = await parseStudentExcel(buffer);
@@ -353,9 +356,10 @@ function setupActionButtons() {
       elements.engineStatus.textContent = 'Seating allocation engine running...';
       const start = performance.now();
       
+      const availableRooms = state.rooms.filter(r => r.available !== false);
       const arranger = new SeatingArranger(
         state.filteredStudents,
-        state.rooms,
+        availableRooms,
         state.studentsPerBench
       );
       
@@ -500,6 +504,7 @@ async function loadDefaultRooms() {
     elements.roomUploader.classList.add('success');
     
     ui.renderRoomsTable(state.rooms);
+    syncSelectAllCheckbox();
     checkEnableGenerate();
     
     elements.engineStatus.textContent = 'Ready. Default room configurations loaded.';
@@ -638,11 +643,41 @@ function setupRoomDatabaseActions() {
       if (confirm(`Are you sure you want to delete room ${roomNo}?`)) {
         state.rooms = state.rooms.filter(r => r.roomNumber !== roomNo);
         ui.renderRoomsTable(state.rooms);
+        syncSelectAllCheckbox();
         checkEnableGenerate();
         elements.engineStatus.textContent = `Room ${roomNo} deleted.`;
       }
     }
   });
+
+  // Handle room availability checkbox toggles via event delegation
+  roomTableBody.addEventListener('change', (e) => {
+    if (e.target.classList.contains('room-available-checkbox')) {
+      const roomNo = e.target.getAttribute('data-room');
+      const isChecked = e.target.checked;
+      const room = state.rooms.find(r => r.roomNumber === roomNo);
+      if (room) {
+        room.available = isChecked;
+        syncSelectAllCheckbox();
+        checkEnableGenerate();
+      }
+    }
+  });
+
+  // Handle Select All checkbox change
+  const selectAllCheckbox = document.getElementById('select-all-rooms');
+  if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      state.rooms.forEach(r => {
+        r.available = isChecked;
+      });
+      document.querySelectorAll('.room-available-checkbox').forEach(cb => {
+        cb.checked = isChecked;
+      });
+      checkEnableGenerate();
+    });
+  }
 }
 
 // Table search and click filtering actions
@@ -710,4 +745,12 @@ function setupSearchAndFilters() {
       ui.renderStudentsTable(filtered);
     }
   });
+}
+
+// Sync Select All Checkbox state with actual room data
+function syncSelectAllCheckbox() {
+  const selectAllCheckbox = document.getElementById('select-all-rooms');
+  if (selectAllCheckbox) {
+    selectAllCheckbox.checked = state.rooms.length > 0 && state.rooms.every(r => r.available !== false);
+  }
 }

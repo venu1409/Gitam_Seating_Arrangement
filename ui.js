@@ -91,12 +91,15 @@ export function renderStudentsTable(students) {
 export function renderRoomsTable(rooms) {
   const tbody = document.getElementById('room-table-body');
   if (!rooms || rooms.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="11" class="empty-table">No room data imported. Upload Room List.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="empty-table">No room data imported. Upload Room List.</td></tr>`;
     return;
   }
   
   tbody.innerHTML = rooms.map(r => `
     <tr>
+      <td style="text-align: center;">
+        <input type="checkbox" class="room-available-checkbox" data-room="${r.roomNumber}" ${r.available !== false ? 'checked' : ''}>
+      </td>
       <td><strong>${r.roomNumber}</strong></td>
       <td>${r.building}</td>
       <td>${r.floor}</td>
