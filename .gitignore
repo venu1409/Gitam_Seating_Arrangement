@@ -3,3 +3,13 @@ package-lock.json
 .gemini/
 .agents/
 .system_generated/
+
+# Ignore all Excel files except the master demo spreadsheet
+*.xlsx
+!Seating Plan Master copy 3-AN-S1.xlsx
+
+# Ignore Word docs and image attachments
+*.docx
+*.jpeg
+*.jpg
+*.png

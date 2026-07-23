@@ -485,13 +485,13 @@ function setupActionButtons() {
   });
 }
 
-// Load default rooms from local Room list.xlsx file
+// Load default rooms from local Seating Plan Master copy 3-AN-S1.xlsx file
 async function loadDefaultRooms() {
   try {
     elements.engineStatus.textContent = 'Loading default room configurations...';
-    const response = await fetch('Room list.xlsx');
+    const response = await fetch('Seating Plan Master copy 3-AN-S1.xlsx');
     if (!response.ok) {
-      throw new Error('Default Room list.xlsx file not found on server.');
+      throw new Error('Default Seating Plan Master copy 3-AN-S1.xlsx file not found on server.');
     }
     const buffer = await response.arrayBuffer();
     state.rooms = await parseRoomExcel(buffer);
