@@ -2,10 +2,10 @@
  * Main Controller Module
  */
 
-import { parseStudentExcel, parseRoomExcel } from './excel.js';
-import { SeatingArranger } from './algorithm.js';
-import * as ui from './ui.js';
-import { exportSeatingWorkbook } from './export.js';
+import { parseStudentExcel, parseRoomExcel } from './excel.js?v=1.0.2';
+import { SeatingArranger } from './algorithm.js?v=1.0.2';
+import * as ui from './ui.js?v=1.0.2';
+import { exportSeatingWorkbook } from './export.js?v=1.0.2';
 
 // Application State
 const state = {

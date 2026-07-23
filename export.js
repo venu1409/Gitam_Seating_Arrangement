@@ -2,7 +2,7 @@
  * Excel Generation and Export Module
  */
 
-import { formatDate } from './excel.js';
+import { formatDate } from './excel.js?v=1.0.2';
 
 // Cache for parsed template workbook to avoid redundant network fetches and parsing
 let cachedTemplateWb = null;
